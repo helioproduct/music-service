@@ -18,6 +18,7 @@ type HTTPConfig struct {
 }
 
 type Config struct {
+	Env      string `env:"ENV"`
 	Postgres PostgresConfig
 	HTTP     HTTPConfig
 }
@@ -30,8 +31,8 @@ func LoadConfig() (*Config, error) {
 
 	config := &Config{
 		Postgres: PostgresConfig{
-			URI:        os.Getenv("POSTGRES_PATH"),
-			Migrations: os.Getenv("POSTGRES_MIGRATIONS_PATH"),
+			URI:        os.Getenv("POSTGRES_URI"),
+			Migrations: os.Getenv("POSTGRES_MIGRATIONS"),
 		},
 		HTTP: HTTPConfig{
 			Port: os.Getenv("HTTP_PORT"),
@@ -46,6 +47,10 @@ func LoadConfig() (*Config, error) {
 	}
 	if config.HTTP.Port == "" {
 		config.HTTP.Port = "8080" // default value
+	}
+
+	if config.Env == "" {
+		config.Env = "local"
 	}
 
 	return config, nil
