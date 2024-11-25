@@ -11,6 +11,5 @@ type SongPostgres struct {
 }
 
 func AddSong(ctx context.Context, song *domain.Song) error {
-
 	return nil
 }
