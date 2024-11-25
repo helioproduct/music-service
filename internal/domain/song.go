@@ -1,6 +1,11 @@
 package domain
 
+import "time"
+
 type Song struct {
-	Name string
-	Group
+	ID          int
+	ReleaseDate time.Time
+	Lyrics      string
+	Link        string
+	Group       *Group
 }

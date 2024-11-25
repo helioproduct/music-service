@@ -1,5 +1,7 @@
 package domain
 
 type Group struct {
-	Name string
+	ID    int
+	Name  string
+	Songs []*Song
 }
