@@ -1,6 +1,5 @@
 package domain
 
-type Song struct {
+type Group struct {
 	Name string
-	Group
 }

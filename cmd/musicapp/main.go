@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"music-service/internal/config"
 	"music-service/pkg/logger"
@@ -9,14 +8,11 @@ import (
 
 func main() {
 
-	logger := logger.New("local")
-
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(cfg)
-
-	logger.Info("hello")
+	logger := logger.New(cfg.Env)
+	logger.Info("config read")
 
 }
