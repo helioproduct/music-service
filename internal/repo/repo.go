@@ -5,7 +5,7 @@ import (
 	"music-service/internal/domain"
 )
 
-type SongStorage interface {
+type SongRepo interface {
 	AddSong(ctx context.Context, song *domain.Song) error
 	UpdateSong(ctx context.Context, songID int, updatedSong *domain.Song) error
 	GetSong(ctx context.Context, songID int) (*domain.Song, error)

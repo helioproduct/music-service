@@ -31,7 +31,6 @@ func (s *PostgresRepo) AddSong(ctx context.Context, song *domain.Song) error {
 		}
 	}()
 
-	// Ensure the group exists or create it
 	var groupID int
 	err = tx.QueryRowContext(ctx, "SELECT id FROM groups WHERE name = $1", song.Group.Name).Scan(&groupID)
 	if err != nil {
