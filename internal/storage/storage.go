@@ -13,9 +13,3 @@ type SongStorage interface {
 	ListSongs(ctx context.Context, filter *SongFilter) ([]*domain.Song, error)
 	GetLyricsByVerse(ctx context.Context, id int, verse int) (string, error)
 }
-
-type GroupStorage interface {
-	AddGroup(ctx context.Context, group *domain.Group) (int, error)
-	GetGroupByNanme(ctx context.Context, groupName string) (*domain.Group, error)
-	DeleteGroup(ctx context.Context, groupName string) error
-}
