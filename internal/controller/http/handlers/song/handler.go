@@ -10,8 +10,9 @@ type SongHanlder struct {
 	songService services.SongService
 }
 
-func NewHandler(svc services.SongService) *SongHanlder {
+func NewHandler(svc services.SongService, logger logger.Logger) *SongHanlder {
 	return &SongHanlder{
 		songService: svc,
+		logger:      logger,
 	}
 }
