@@ -6,7 +6,9 @@ import (
 	"music-service/internal/config"
 	"music-service/pkg/logger"
 
-	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func main() {
@@ -17,10 +19,11 @@ func main() {
 	}
 	logger := logger.New(cfg.Env)
 	logger.Info("config read")
+	logger.Info("config:", *cfg)
 
-	m, err := migrate.New("file://"+cfg.Postgres.Migrations, cfg.Postgres.URI)
+	m, err := migrate.New("file://"+cfg.Postgres.Migrations, cfg.Postgres.URI+"?sslmode=disable")
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Fatal("error creating migrations", err.Error())
 	}
 
 	if err := m.Up(); err != nil {
@@ -32,4 +35,7 @@ func main() {
 		}
 	}
 
+	// if err := m.Down(); err != nil {
+	// 	logger.Error("error migrations down", err)
+	// }
 }
