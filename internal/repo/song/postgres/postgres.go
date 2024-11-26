@@ -168,8 +168,38 @@ func (r *PostgresRepo) ListSongs(ctx context.Context, filter *repo.SongFilter) (
 	return songs, nil
 }
 
-func (s *PostgresRepo) GetLyricsByVerse(ctx context.Context, id int, verse int) (string, error) {
-	var verseText string
-	err := s.db.QueryRowContext(ctx, getLyricsQuery, id, verse).Scan(&verseText)
-	return verseText, err
+func (r *PostgresRepo) GetLyrics(ctx context.Context, songID, offset, limit int) ([]string, error) {
+	// SQL-запрос с пагинацией
+	query := `
+        SELECT verse
+        FROM regexp_split_to_table(
+            (SELECT lyrics FROM songs WHERE id = $1),
+            '\n\n'
+        ) AS verse
+        LIMIT $2 OFFSET $3;
+    `
+
+	// Выполняем запрос
+	rows, err := r.db.QueryContext(ctx, query, songID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching lyrics: %w", err)
+	}
+	defer rows.Close()
+
+	// Сохраняем куплеты
+	var verses []string
+	for rows.Next() {
+		var verse string
+		if err := rows.Scan(&verse); err != nil {
+			return nil, fmt.Errorf("error scanning verse: %w", err)
+		}
+		verses = append(verses, verse)
+	}
+
+	// Проверяем ошибки при итерации
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return verses, nil
 }

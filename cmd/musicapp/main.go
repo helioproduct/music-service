@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"music-service/internal/config"
-	"music-service/internal/repo"
 	"music-service/pkg/logger"
 	"music-service/pkg/migrations"
 
@@ -73,7 +72,7 @@ func main() {
 	// 	Group:       song.Group,
 	// }
 
-	songStorage := songrepo.NewPostgres(db)
+	songsRepo := songrepo.NewPostgres(db)
 	// err = songStorage.AddSong(context.Background(), song)
 	// if err != nil {
 	// 	logger.Info("error adding song", "error", err)
@@ -99,22 +98,30 @@ func main() {
 	// 	logger.Error("error updateing song", "error", err)
 	// }
 
-	filter := &repo.SongFilter{
-		Lyrics:    "fuck",
-		GroupName: "popov",
-		Limit:     5,
-	}
+	// filter := &repo.SongFilter{
+	// 	Lyrics:    "fuck",
+	// 	GroupName: "popov",
+	// 	Limit:     5,
+	// }
 
-	songs, err := songStorage.ListSongs(context.Background(), filter)
+	// songs, err := songStorage.ListSongs(context.Background(), filter)
+	// if err != nil {
+	// 	logger.Error("error filtering", "error", err)
+	// 	return
+	// }
+
+	// for _, song := range songs {
+	// 	fmt.Println(song)
+	// 	fmt.Println(song.Group)
+	// 	fmt.Println()
+	// }
+
+	verses, err := songsRepo.GetLyrics(context.Background(), 4, 0, 4)
 	if err != nil {
-		logger.Error("error filtering", "error", err)
-		return
+		log.Fatalf("error retrieving lyrics: %v", err)
 	}
 
-	for _, song := range songs {
-		fmt.Println(song)
-		fmt.Println(song.Group)
-		fmt.Println()
+	for i, verse := range verses {
+		fmt.Printf("Verse %d:\n%s\n\n", i+1, verse)
 	}
-
 }

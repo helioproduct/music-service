@@ -3,8 +3,7 @@ package postgres
 var (
 	insertSongQuery = `
 		INSERT INTO songs (name, release_date, lyrics, link, group_id)
-		VALUES ($1, $2, $3, $4, $5)
-	`
+		VALUES ($1, $2, $3, $4, $5)`
 
 	insertGroupQuery = "INSERT INTO groups (name) VALUES ($1) RETURNING id"
 
@@ -24,12 +23,10 @@ var (
 	listSongsQuery = `
 		SELECT s.id, s.name, s.release_date, s.lyrics, s.link, g.id, g.name as group_name
 		FROM songs s
-		JOIN groups g ON s.group_id = g.id
-	`
+		JOIN groups g ON s.group_id = g.id`
 
 	getLyricsQuery = `
-		SELECT COALESCE(SPLIT_PART(lyrics, '\n', $2), '')
+		SELECT lyrics 
 		FROM songs
-		WHERE id = $1
-	`
+		LIMIT $1 OFFSET $2`
 )
