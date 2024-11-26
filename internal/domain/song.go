@@ -3,13 +3,10 @@ package domain
 import "time"
 
 type Song struct {
-	ID int
-	SongDetail
-	Group *Group
-}
-
-type SongDetail struct {
+	ID          int
+	Name        string
 	ReleaseDate time.Time
 	Lyrics      string
 	Link        string
+	Group       *Group
 }

@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"log"
 	"music-service/internal/config"
-	"music-service/internal/domain"
 	"music-service/pkg/logger"
 	"music-service/pkg/migrations"
-	"time"
 
 	songrepo "music-service/internal/repo/song/postgres"
 
@@ -54,20 +52,37 @@ func main() {
 	}
 	fmt.Println("Connected!")
 
-	group := &domain.Group{
-		Name: "nikolay popov",
-	}
+	// group := &domain.Group{
+	// 	Name: "nikolay popov",
+	// }
 
-	song := &domain.Song{
-		ReleaseDate: time.Now(),
-		Lyrics:      "fuck women",
-		Link:        "google.com",
-		Group:       group,
-	}
+	// song := &domain.Song{
+	// 	Name:        "helio",
+	// 	Lyrics:      "fuck this man",
+	// 	Group:       group,
+	// 	ReleaseDate: time.Now(),
+	// 	Link:        "google.com",
+	// }
 
 	songStorage := songrepo.NewPostgres(db)
-	err = songStorage.AddSong(context.Background(), song)
+	// err = songStorage.AddSong(context.Background(), song)
+	// if err != nil {
+	// logger.Info("error adding song", "error", err)
+	// }
+
+	// song, err := songStorage.GetSong(context.Background(), 1)
+	// if err != nil {
+	// 	logger.Error("error getting song by id", "error", err)
+	// 	return
+	// }
+
+	// fmt.Println(song)
+	// fmt.Println(song.Group)
+
+	err = songStorage.DeleteSong(context.Background(), 2)
 	if err != nil {
-		logger.Info("error adding song", "error", err)
+		logger.Error("error deleting song", "error", err)
+		return
 	}
+
 }

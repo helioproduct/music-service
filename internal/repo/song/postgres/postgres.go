@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"music-service/internal/domain"
 	"music-service/internal/repo"
 )
@@ -16,21 +18,53 @@ func NewPostgres(db *sql.DB) *PostgresRepo {
 }
 
 func (s *PostgresRepo) AddSong(ctx context.Context, song *domain.Song) error {
-	if song == nil {
-		return repo.ErrSongIsNil
-	} else if song.Group == nil {
-		return repo.ErrGroupIsNil
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+
+	// Ensure the group exists or create it
+	var groupID int
+	err = tx.QueryRowContext(ctx, "SELECT id FROM groups WHERE name = $1", song.Group.Name).Scan(&groupID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Group does not exist, insert it
+			err = tx.QueryRowContext(ctx, insertGroupQuery, song.Group.Name).Scan(&groupID)
+			if err != nil {
+				return fmt.Errorf("error inserting group: %w", err)
+			}
+			// update ID in struct
+			song.Group.ID = groupID
+		} else {
+			return fmt.Errorf("error checking group existence: %w", err)
+		}
 	}
 
-	err := s.db.QueryRowContext(ctx, insertQuery, song.ReleaseDate, song.Lyrics, song.Link).Scan(&song.ID)
-	return err
+	_, err = tx.ExecContext(ctx, insertSongQuery,
+		song.Name,
+		song.ReleaseDate,
+		song.Lyrics,
+		song.Link,
+		groupID)
+
+	if err != nil {
+		return fmt.Errorf("error inserting song: %w", err)
+	}
+
+	return nil
 }
 
 func (s *PostgresRepo) UpdateSong(ctx context.Context, songID int, updatedSong *domain.Song) error {
 	if updatedSong == nil {
 		return repo.ErrSongIsNil
 	}
-
 	_, err := s.db.ExecContext(ctx, updateQuery, updatedSong.ReleaseDate, updatedSong.Lyrics, updatedSong.Link, updatedSong.Group.ID, songID)
 	return err
 }
@@ -43,6 +77,9 @@ func (s *PostgresRepo) GetSong(ctx context.Context, songID int) (*domain.Song, e
 		&group.ID, &group.Name,
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repo.ErrNoSuchSong
+		}
 		return nil, err
 	}
 	song.Group = &group
@@ -50,7 +87,11 @@ func (s *PostgresRepo) GetSong(ctx context.Context, songID int) (*domain.Song, e
 }
 
 func (s *PostgresRepo) DeleteSong(ctx context.Context, songID int) error {
-	_, err := s.db.ExecContext(ctx, deleteQuery, songID)
+	result, err := s.db.ExecContext(ctx, deleteQuery, songID)
+	affected, _ := result.RowsAffected()
+	if affected < 1 {
+		return repo.ErrNoSuchSong
+	}
 	return err
 }
 
