@@ -21,7 +21,7 @@ func main() {
 	logger.Info("config read")
 	logger.Info("config:", *cfg)
 
-	m, err := migrate.New("file://"+cfg.Postgres.Migrations, cfg.Postgres.URI+"?sslmode=disable")
+	m, err := migrate.New(cfg.Postgres.Migrations, cfg.Postgres.URI)
 	if err != nil {
 		logger.Fatal("error creating migrations", err.Error())
 	}

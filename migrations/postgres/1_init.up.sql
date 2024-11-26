@@ -4,7 +4,7 @@ CREATE TABLE "groups"
     name TEXT NOT NULL UNIQUE  
 );
 
-CREATE TABLE "song"
+CREATE TABLE "songs"
 (
     id SERIAL PRIMARY KEY,         
     release_date DATE NOT NULL,    
