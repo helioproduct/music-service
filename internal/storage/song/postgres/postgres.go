@@ -16,11 +16,7 @@ func NewPostgresSongStorage(db *sql.DB) *PostgresSongStorage {
 }
 
 func (s *PostgresSongStorage) AddSong(ctx context.Context, song *domain.Song) error {
-	query := `
-		INSERT INTO songs (release_date, lyrics, link, group_id)
-		VALUES ($1, $2, $3, $4) RETURNING id
-	`
-	err := s.db.QueryRowContext(ctx, query, song.ReleaseDate, song.Lyrics, song.Link, song.Group.ID).Scan(&song.ID)
+	err := s.db.QueryRowContext(ctx, insertQuery, song.ReleaseDate, song.Lyrics, song.Link, song.Group.ID).Scan(&song.ID)
 	return err
 }
 
@@ -35,15 +31,9 @@ func (s *PostgresSongStorage) UpdateSong(ctx context.Context, songID int, update
 }
 
 func (s *PostgresSongStorage) GetSong(ctx context.Context, songID int) (*domain.Song, error) {
-	query := `
-		SELECT s.id, s.release_date, s.lyrics, s.link, g.id, g.name
-		FROM songs s
-		LEFT JOIN groups g ON s.group_id = g.id
-		WHERE s.id = $1
-	`
 	var song domain.Song
 	var group domain.Group
-	err := s.db.QueryRowContext(ctx, query, songID).Scan(
+	err := s.db.QueryRowContext(ctx, getSongQuery, songID).Scan(
 		&song.ID, &song.ReleaseDate, &song.Lyrics, &song.Link,
 		&group.ID, &group.Name,
 	)
@@ -55,21 +45,12 @@ func (s *PostgresSongStorage) GetSong(ctx context.Context, songID int) (*domain.
 }
 
 func (s *PostgresSongStorage) DeleteSong(ctx context.Context, songID int) error {
-	query := `
-		DELETE FROM songs WHERE id = $1
-	`
-	_, err := s.db.ExecContext(ctx, query, songID)
+	_, err := s.db.ExecContext(ctx, deleteQuery, songID)
 	return err
 }
 
 func (s *PostgresSongStorage) ListSongs(ctx context.Context, filter *storage.SongFilter) ([]*domain.Song, error) {
-	query := `
-		SELECT s.id, s.release_date, s.lyrics, s.link, g.id, g.name
-		FROM songs s
-		LEFT JOIN groups g ON s.group_id = g.id
-		ORDER BY s.release_date DESC
-	`
-	rows, err := s.db.QueryContext(ctx, query)
+	rows, err := s.db.QueryContext(ctx, listSongsQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -91,12 +72,7 @@ func (s *PostgresSongStorage) ListSongs(ctx context.Context, filter *storage.Son
 }
 
 func (s *PostgresSongStorage) GetLyricsByVerse(ctx context.Context, id int, verse int) (string, error) {
-	query := `
-		SELECT COALESCE(SPLIT_PART(lyrics, '\n', $2), '')
-		FROM songs
-		WHERE id = $1
-	`
 	var verseText string
-	err := s.db.QueryRowContext(ctx, query, id, verse).Scan(&verseText)
+	err := s.db.QueryRowContext(ctx, getLyricsQuery, id, verse).Scan(&verseText)
 	return verseText, err
 }
