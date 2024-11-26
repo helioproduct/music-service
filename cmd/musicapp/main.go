@@ -105,7 +105,7 @@ func main() {
 		Limit:     5,
 	}
 
-	songs, err := songStorage.FilterSongs(context.Background(), filter)
+	songs, err := songStorage.ListSongs(context.Background(), filter)
 	if err != nil {
 		logger.Error("error filtering", "error", err)
 		return

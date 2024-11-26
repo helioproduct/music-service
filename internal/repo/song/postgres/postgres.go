@@ -96,7 +96,7 @@ func (s *PostgresRepo) DeleteSong(ctx context.Context, songID int) error {
 	return err
 }
 
-func (r *PostgresRepo) FilterSongs(ctx context.Context, filter *repo.SongFilter) ([]*domain.Song, error) {
+func (r *PostgresRepo) ListSongs(ctx context.Context, filter *repo.SongFilter) ([]*domain.Song, error) {
 	if filter == nil {
 		return nil, repo.ErrFilterIsNil
 	}
