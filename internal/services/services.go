@@ -12,5 +12,5 @@ type SongService interface {
 	GetSong(ctx context.Context, songID int) (*domain.Song, error)
 	DeleteSong(ctx context.Context, songID int) error
 	ListSongs(ctx context.Context, filter *repo.SongFilter) ([]*domain.Song, error)
-	GetLyrics(ctx context.Context, offset, limit int) ([]string, error)
+	GetLyrics(ctx context.Context, songID, offset, limit int) ([]string, error)
 }

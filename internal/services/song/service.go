@@ -5,6 +5,7 @@ import (
 	"music-service/internal/domain"
 	"music-service/internal/repo"
 	"music-service/internal/services"
+	"time"
 )
 
 type songService struct {
@@ -16,6 +17,16 @@ func NewSongService(repo repo.SongRepo) services.SongService {
 }
 
 func (s *songService) AddSong(ctx context.Context, song *domain.Song) error {
+	if song == nil {
+		return repo.ErrSongIsNil
+	}
+
+	var err error
+	song.ReleaseDate, err = time.Parse(time.DateOnly, song.ReleaseDate.Format(time.DateOnly))
+	if err != nil {
+		return services.ErrParsingDate
+	}
+
 	return s.repo.AddSong(ctx, song)
 }
 
@@ -35,6 +46,6 @@ func (s *songService) ListSongs(ctx context.Context, filter *repo.SongFilter) ([
 	return s.repo.ListSongs(ctx, filter)
 }
 
-func (s *songService) GetLyrics(ctx context.Context, offset, limit int) ([]string, error) {
-	return s.repo.GetLyrics(ctx, offset, limit)
+func (s *songService) GetLyrics(ctx context.Context, songID, offset, limit int) ([]string, error) {
+	return s.repo.GetLyrics(ctx, songID, offset, limit)
 }

@@ -103,9 +103,7 @@ func (r *PostgresRepo) ListSongs(ctx context.Context, filter *repo.SongFilter) (
 	if filter == nil {
 		return nil, repo.ErrFilterIsNil
 	}
-
 	query := listSongsQuery
-
 	// Conditions and arguments
 	conditions := []string{}
 	args := []interface{}{}
@@ -159,7 +157,6 @@ func (r *PostgresRepo) ListSongs(ctx context.Context, filter *repo.SongFilter) (
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
-
 		songs = append(songs, song)
 	}
 
@@ -177,7 +174,6 @@ func (r *PostgresRepo) GetLyrics(ctx context.Context, songID, offset, limit int)
 	}
 	defer rows.Close()
 
-	// Сохраняем куплеты
 	var verses []string
 	for rows.Next() {
 		var verse string

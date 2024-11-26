@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"log"
 	"music-service/internal/config"
+	"music-service/internal/domain"
 	"music-service/pkg/logger"
 	"music-service/pkg/migrations"
+	"time"
 
 	songrepo "music-service/internal/repo/song/postgres"
+	songservice "music-service/internal/services/song"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -52,18 +55,6 @@ func main() {
 	}
 	fmt.Println("Connected!")
 
-	// group := &domain.Group{
-	// 	Name: "helioproduct",
-	// }
-
-	// song := &domain.Song{
-	// 	Name:        "helio2",
-	// 	Lyrics:      "fuck this wo,an",
-	// 	Group:       group,
-	// 	ReleaseDate: time.Now(),
-	// 	Link:        "ya.ru",
-	// }
-
 	// updateSong := &domain.Song{
 	// 	Name:        "NEW NAME OLD TAPES",
 	// 	Lyrics:      song.Lyrics,
@@ -72,7 +63,6 @@ func main() {
 	// 	Group:       song.Group,
 	// }
 
-	songsRepo := songrepo.NewPostgres(db)
 	// err = songStorage.AddSong(context.Background(), song)
 	// if err != nil {
 	// 	logger.Info("error adding song", "error", err)
@@ -116,12 +106,33 @@ func main() {
 	// 	fmt.Println()
 	// }
 
-	verses, err := songsRepo.GetLyrics(context.Background(), 3, 3, 1)
-	if err != nil {
-		log.Fatalf("error retrieving lyrics: %v", err)
+	// verses, err := songsRepo.GetLyrics(context.Background(), 3, 3, 1)
+	// if err != nil {
+	// 	log.Fatalf("error retrieving lyrics: %v", err)
+	// }
+
+	// for i, verse := range verses {
+	// 	fmt.Printf("Verse %d:\n%s\n\n", i+1, verse)
+	// }
+
+	songsRepo := songrepo.NewPostgres(db)
+	songSvc := songservice.NewSongService(songsRepo)
+
+	group := &domain.Group{
+		Name: "helioproduct",
 	}
 
-	for i, verse := range verses {
-		fmt.Printf("Verse %d:\n%s\n\n", i+1, verse)
+	song := &domain.Song{
+		Name:        "helio2",
+		Lyrics:      "fuck this wo,an",
+		Group:       group,
+		ReleaseDate: time.Now(),
+		Link:        "ya.ru",
 	}
+
+	err = songSvc.AddSong(context.Background(), song)
+	if err != nil {
+		logger.Error("service error adding song", "error", err)
+	}
+
 }
