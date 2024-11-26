@@ -15,10 +15,7 @@ func Panic(logger *slog.Logger) mux.MiddlewareFunc {
 			defer func() {
 				if err := recover(); err != nil {
 					logger.Error("recover middleware", "error", err)
-					// debug.PrintStack()
-					stack := string(debug.Stack())
-					logger.Debug(stack)
-					// logger.Error("panic", "stack", )
+					logger.Debug(string(debug.Stack()))
 					http.Error(w, "Internal server error", 500)
 				}
 			}()

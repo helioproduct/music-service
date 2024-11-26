@@ -14,9 +14,7 @@ func Logging(logger logger.Logger) mux.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 			logger.Info("Started request", "method", r.Method, "url", r.URL.Path)
-
 			next.ServeHTTP(w, r)
-
 			duration := time.Since(start)
 			logger.Info("Completed request", "method", r.Method, "url", r.URL.Path, "duration", duration)
 		})
