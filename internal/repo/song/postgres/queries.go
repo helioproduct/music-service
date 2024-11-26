@@ -1,5 +1,6 @@
 package postgres
 
+// PostgreSQL format
 var (
 	insertQuery = `
 		INSERT INTO songs (release_date, lyrics, link, group_id)
@@ -12,6 +13,11 @@ var (
 		LEFT JOIN groups g ON s.group_id = g.id
 		WHERE s.id = $1
 	`
+
+	updateQuery = `
+	UPDATE songs
+	SET release_date = $1, lyrics = $2, link = $3, group_id = $4
+	WHERE id = $5`
 
 	deleteQuery = `DELETE FROM songs WHERE id = $1`
 

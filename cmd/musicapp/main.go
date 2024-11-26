@@ -1,11 +1,18 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"music-service/internal/config"
+	"music-service/internal/domain"
 	"music-service/pkg/logger"
 	"music-service/pkg/migrations"
+	"time"
+
+	songrepo "music-service/internal/repo/song/postgres"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -33,6 +40,30 @@ func main() {
 		} else {
 			logger.Fatal("error making migrations", err)
 		}
+	}
+
+	db, err := sql.Open("postgres", cfg.Postgres.URI)
+	if err != nil {
+		logger.Fatal("error connecting to db", err)
+		log.Fatal(err)
+	}
+
+	pingErr := db.Ping()
+	if pingErr != nil {
+		logger.Fatal("error db ping", err)
+	}
+	fmt.Println("Connected!")
+
+	song := &domain.Song{
+		ReleaseDate: time.Now(),
+		Lyrics:      "fuck women",
+		Link:        "google.com",
+	}
+
+	songStorage := songrepo.NewPostgres(db)
+	err = songStorage.AddSong(context.Background(), song)
+	if err != nil {
+		logger.Info("error adding song", err)
 	}
 
 }
