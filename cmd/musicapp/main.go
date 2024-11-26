@@ -54,10 +54,15 @@ func main() {
 	}
 	fmt.Println("Connected!")
 
+	group := &domain.Group{
+		Name: "nikolay popov",
+	}
+
 	song := &domain.Song{
 		ReleaseDate: time.Now(),
 		Lyrics:      "fuck women",
 		Link:        "google.com",
+		Group:       group,
 	}
 
 	songStorage := songrepo.NewPostgres(db)
@@ -65,7 +70,4 @@ func main() {
 	if err != nil {
 		logger.Info("error adding song", "error", err)
 	}
-
-	logger.Info("messagea", "key", "value")
-
 }

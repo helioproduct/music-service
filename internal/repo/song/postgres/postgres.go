@@ -22,11 +22,15 @@ func (s *PostgresRepo) AddSong(ctx context.Context, song *domain.Song) error {
 		return repo.ErrGroupIsNil
 	}
 
-	err := s.db.QueryRowContext(ctx, insertQuery, song.ReleaseDate, song.Lyrics, song.Link, song.Group.ID).Scan(&song.ID)
+	err := s.db.QueryRowContext(ctx, insertQuery, song.ReleaseDate, song.Lyrics, song.Link).Scan(&song.ID)
 	return err
 }
 
 func (s *PostgresRepo) UpdateSong(ctx context.Context, songID int, updatedSong *domain.Song) error {
+	if updatedSong == nil {
+		return repo.ErrSongIsNil
+	}
+
 	_, err := s.db.ExecContext(ctx, updateQuery, updatedSong.ReleaseDate, updatedSong.Lyrics, updatedSong.Link, updatedSong.Group.ID, songID)
 	return err
 }

@@ -3,8 +3,8 @@ package postgres
 // PostgreSQL format
 var (
 	insertQuery = `
-		INSERT INTO songs (release_date, lyrics, link, group_id)
-		VALUES ($1, $2, $3, $4) RETURNING id
+		INSERT INTO songs (release_date, lyrics, link)
+		VALUES ($1, $2, $3) RETURNING id
 	`
 
 	getSongQuery = `
