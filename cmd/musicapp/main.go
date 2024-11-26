@@ -63,7 +63,9 @@ func main() {
 	songStorage := songrepo.NewPostgres(db)
 	err = songStorage.AddSong(context.Background(), song)
 	if err != nil {
-		logger.Info("error adding song", err)
+		logger.Info("error adding song", "error", err)
 	}
+
+	logger.Info("messagea", "key", "value")
 
 }

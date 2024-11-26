@@ -31,19 +31,10 @@ func NewSlogLogger(env string) *SlogLogger {
 	switch env {
 	case envLocal:
 		log = slog.New(slog.NewTextHandler(os.Stdout, nil))
-
-	case envDev:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, nil),
-		)
-	case envProd:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, nil),
-		)
+	case envDev, envProd:
+		log = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	default:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, nil),
-		)
+		log = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	}
 
 	return &SlogLogger{
@@ -95,9 +86,5 @@ func (l *SlogLogger) Fatal(message string, args ...interface{}) {
 }
 
 func (l *SlogLogger) log(level slog.Level, message string, args ...interface{}) {
-	if len(args) == 0 {
-		l.logger.Log(context.TODO(), level, message)
-	} else {
-		l.logger.Log(context.TODO(), level, message, "args", args)
-	}
+	l.logger.Log(context.TODO(), level, message, args...)
 }
