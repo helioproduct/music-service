@@ -5,8 +5,8 @@ import (
 	"log"
 	"music-service/internal/config"
 	"music-service/pkg/logger"
+	"music-service/pkg/migrations"
 
-	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
@@ -21,21 +21,18 @@ func main() {
 	logger.Info("config read")
 	logger.Info("config:", *cfg)
 
-	m, err := migrate.New(cfg.Postgres.Migrations, cfg.Postgres.URI)
+	migrator, err := migrations.NewMigrator(cfg.Postgres.Migrations, cfg.Postgres.URI)
 	if err != nil {
-		logger.Fatal("error creating migrations", err.Error())
+		logger.Fatal("error initing migrator", err)
 	}
 
-	if err := m.Up(); err != nil {
-		// already up
-		if errors.Is(err, migrate.ErrNoChange) {
+	err = migrator.Up()
+	if err != nil {
+		if errors.Is(err, migrations.ErrNoChange) {
 			logger.Info("no migrations to apply")
 		} else {
-			logger.Fatal(err.Error())
+			logger.Fatal("error making migrations", err)
 		}
 	}
 
-	// if err := m.Down(); err != nil {
-	// 	logger.Error("error migrations down", err)
-	// }
 }
