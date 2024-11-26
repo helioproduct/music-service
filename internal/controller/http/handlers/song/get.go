@@ -6,25 +6,6 @@ import (
 	"time"
 )
 
-type AddSongRequest struct {
-	Song  string `json:"song"`
-	Group string `json:"group"`
-}
-
-func (r *AddSongRequest) Validate() error {
-	if r.Song == "" {
-		return fmt.Errorf("song cannot be empty")
-	}
-	if r.Group == "" {
-		return fmt.Errorf("group cannot be empty")
-	}
-	return nil
-}
-
-type DeleteSongRequest struct {
-	SongID int `json:"songID"`
-}
-
 type GetSongsRequest struct {
 	ReleaseDate time.Time `json:"release-date"`
 	Lyrics      string    `json:"lyrics"`
@@ -42,7 +23,4 @@ func (r *GetSongsRequest) Validate() error {
 		}
 	}
 	return nil
-}
-
-type UpdateSongRequest struct {
 }
