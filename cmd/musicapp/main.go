@@ -116,7 +116,7 @@ func main() {
 	// 	fmt.Println()
 	// }
 
-	verses, err := songsRepo.GetLyrics(context.Background(), 4, 0, 4)
+	verses, err := songsRepo.GetLyrics(context.Background(), 3, 3, 1)
 	if err != nil {
 		log.Fatalf("error retrieving lyrics: %v", err)
 	}

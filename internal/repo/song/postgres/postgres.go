@@ -66,7 +66,11 @@ func (s *PostgresRepo) UpdateSong(ctx context.Context, songID int, updatedSong *
 	if updatedSong == nil {
 		return repo.ErrSongIsNil
 	}
-	_, err := s.db.ExecContext(ctx, updateQuery, updatedSong.ReleaseDate, updatedSong.Lyrics, updatedSong.Link, songID)
+	result, err := s.db.ExecContext(ctx, updateQuery, updatedSong.ReleaseDate, updatedSong.Lyrics, updatedSong.Link, songID)
+	affected, _ := result.RowsAffected()
+	if affected < 1 {
+		return repo.ErrNoSuchSong
+	}
 	return err
 }
 
@@ -108,7 +112,6 @@ func (r *PostgresRepo) ListSongs(ctx context.Context, filter *repo.SongFilter) (
 	args := []interface{}{}
 	argIndex := 1
 
-	// Add filters dynamically
 	if filter.ReleaseDate != nil {
 		conditions = append(conditions, fmt.Sprintf("s.release_date = $%d", argIndex))
 		args = append(args, *filter.ReleaseDate)
@@ -117,7 +120,7 @@ func (r *PostgresRepo) ListSongs(ctx context.Context, filter *repo.SongFilter) (
 
 	if filter.Lyrics != "" {
 		conditions = append(conditions, fmt.Sprintf("s.lyrics ILIKE $%d", argIndex))
-		args = append(args, "%"+filter.Lyrics+"%") // Add wildcards for substring match
+		args = append(args, "%"+filter.Lyrics+"%")
 		argIndex++
 	}
 
@@ -169,18 +172,7 @@ func (r *PostgresRepo) ListSongs(ctx context.Context, filter *repo.SongFilter) (
 }
 
 func (r *PostgresRepo) GetLyrics(ctx context.Context, songID, offset, limit int) ([]string, error) {
-	// SQL-запрос с пагинацией
-	query := `
-        SELECT verse
-        FROM regexp_split_to_table(
-            (SELECT lyrics FROM songs WHERE id = $1),
-            '\n\n'
-        ) AS verse
-        LIMIT $2 OFFSET $3;
-    `
-
-	// Выполняем запрос
-	rows, err := r.db.QueryContext(ctx, query, songID, limit, offset)
+	rows, err := r.db.QueryContext(ctx, getLyricsQuery, songID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching lyrics: %w", err)
 	}
@@ -196,10 +188,8 @@ func (r *PostgresRepo) GetLyrics(ctx context.Context, songID, offset, limit int)
 		verses = append(verses, verse)
 	}
 
-	// Проверяем ошибки при итерации
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating over rows: %w", err)
 	}
-
 	return verses, nil
 }

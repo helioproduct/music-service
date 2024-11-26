@@ -26,7 +26,10 @@ var (
 		JOIN groups g ON s.group_id = g.id`
 
 	getLyricsQuery = `
-		SELECT lyrics 
-		FROM songs
-		LIMIT $1 OFFSET $2`
+        SELECT verse
+        FROM regexp_split_to_table(
+            (SELECT lyrics FROM songs WHERE id = $1),
+            '\n\n'
+        ) AS verse
+        LIMIT $2 OFFSET $3;`
 )
