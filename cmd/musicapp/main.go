@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"music-service/internal/config"
+	"music-service/internal/repo"
 	"music-service/pkg/logger"
 	"music-service/pkg/migrations"
 
@@ -53,21 +54,29 @@ func main() {
 	fmt.Println("Connected!")
 
 	// group := &domain.Group{
-	// 	Name: "nikolay popov",
+	// 	Name: "helioproduct",
 	// }
 
 	// song := &domain.Song{
-	// 	Name:        "helio",
-	// 	Lyrics:      "fuck this man",
+	// 	Name:        "helio2",
+	// 	Lyrics:      "fuck this wo,an",
 	// 	Group:       group,
 	// 	ReleaseDate: time.Now(),
-	// 	Link:        "google.com",
+	// 	Link:        "ya.ru",
+	// }
+
+	// updateSong := &domain.Song{
+	// 	Name:        "NEW NAME OLD TAPES",
+	// 	Lyrics:      song.Lyrics,
+	// 	ReleaseDate: time.Now().Add(time.Duration(time.Now().Year())),
+	// 	Link:        "helio.com",
+	// 	Group:       song.Group,
 	// }
 
 	songStorage := songrepo.NewPostgres(db)
 	// err = songStorage.AddSong(context.Background(), song)
 	// if err != nil {
-	// logger.Info("error adding song", "error", err)
+	// 	logger.Info("error adding song", "error", err)
 	// }
 
 	// song, err := songStorage.GetSong(context.Background(), 1)
@@ -79,10 +88,33 @@ func main() {
 	// fmt.Println(song)
 	// fmt.Println(song.Group)
 
-	err = songStorage.DeleteSong(context.Background(), 2)
+	// err = songStorage.DeleteSong(context.Background(), 2)
+	// if err != nil {
+	// 	logger.Error("error deleting song", "error", err)
+	// 	return
+	// }
+
+	// err = songStorage.UpdateSong(context.Background(), 3, updateSong)
+	// if err != nil {
+	// 	logger.Error("error updateing song", "error", err)
+	// }
+
+	filter := &repo.SongFilter{
+		Lyrics:    "fuck",
+		GroupName: "popov",
+		Limit:     5,
+	}
+
+	songs, err := songStorage.FilterSongs(context.Background(), filter)
 	if err != nil {
-		logger.Error("error deleting song", "error", err)
+		logger.Error("error filtering", "error", err)
 		return
+	}
+
+	for _, song := range songs {
+		fmt.Println(song)
+		fmt.Println(song.Group)
+		fmt.Println()
 	}
 
 }

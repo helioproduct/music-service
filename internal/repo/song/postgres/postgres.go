@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"music-service/internal/domain"
 	"music-service/internal/repo"
+	"strings"
 )
 
 type PostgresRepo struct {
@@ -65,7 +66,7 @@ func (s *PostgresRepo) UpdateSong(ctx context.Context, songID int, updatedSong *
 	if updatedSong == nil {
 		return repo.ErrSongIsNil
 	}
-	_, err := s.db.ExecContext(ctx, updateQuery, updatedSong.ReleaseDate, updatedSong.Lyrics, updatedSong.Link, updatedSong.Group.ID, songID)
+	_, err := s.db.ExecContext(ctx, updateQuery, updatedSong.ReleaseDate, updatedSong.Lyrics, updatedSong.Link, songID)
 	return err
 }
 
@@ -95,26 +96,76 @@ func (s *PostgresRepo) DeleteSong(ctx context.Context, songID int) error {
 	return err
 }
 
-func (s *PostgresRepo) ListSongs(ctx context.Context, filter *repo.SongFilter) ([]*domain.Song, error) {
-	rows, err := s.db.QueryContext(ctx, listSongsQuery)
+func (r *PostgresRepo) FilterSongs(ctx context.Context, filter *repo.SongFilter) ([]*domain.Song, error) {
+	if filter == nil {
+		return nil, repo.ErrFilterIsNil
+	}
+
+	query := listSongsQuery
+
+	// Conditions and arguments
+	conditions := []string{}
+	args := []interface{}{}
+	argIndex := 1
+
+	// Add filters dynamically
+	if filter.ReleaseDate != nil {
+		conditions = append(conditions, fmt.Sprintf("s.release_date = $%d", argIndex))
+		args = append(args, *filter.ReleaseDate)
+		argIndex++
+	}
+
+	if filter.Lyrics != "" {
+		conditions = append(conditions, fmt.Sprintf("s.lyrics ILIKE $%d", argIndex))
+		args = append(args, "%"+filter.Lyrics+"%") // Add wildcards for substring match
+		argIndex++
+	}
+
+	if filter.Link != "" {
+		conditions = append(conditions, fmt.Sprintf("s.link ILIKE $%d", argIndex))
+		args = append(args, "%"+filter.Link+"%")
+		argIndex++
+	}
+
+	if filter.GroupName != "" {
+		conditions = append(conditions, fmt.Sprintf("g.name ILIKE $%d", argIndex))
+		args = append(args, "%"+filter.GroupName+"%")
+		argIndex++
+	}
+
+	if len(conditions) > 0 {
+		query += "WHERE " + strings.Join(conditions, " AND ") + " "
+	}
+
+	query += fmt.Sprintf("LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
+	args = append(args, filter.Limit, filter.Offset)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error executing query: %w", err)
 	}
 	defer rows.Close()
 
 	var songs []*domain.Song
 	for rows.Next() {
-		var song domain.Song
-		var group domain.Group
-		err = rows.Scan(&song.ID, &song.ReleaseDate, &song.Lyrics, &song.Link, &group.ID, &group.Name)
+		song := new(domain.Song)
+		group := new(domain.Group)
+		song.Group = group
+
+		err := rows.Scan(&song.ID, &song.Name, &song.ReleaseDate, &song.Lyrics, &song.Link,
+			&group.ID, &group.Name)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
-		song.Group = &group
-		songs = append(songs, &song)
+
+		songs = append(songs, song)
 	}
 
-	return songs, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	return songs, nil
 }
 
 func (s *PostgresRepo) GetLyricsByVerse(ctx context.Context, id int, verse int) (string, error) {
