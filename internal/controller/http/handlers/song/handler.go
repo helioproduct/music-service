@@ -2,14 +2,16 @@ package song
 
 import (
 	"music-service/internal/services"
+	"music-service/pkg/logger"
 )
 
-type SongRoutes struct {
+type SongHanlder struct {
+	logger      logger.Logger
 	songService services.SongService
 }
 
-func NewSongRoutes(svc services.SongService) *SongRoutes {
-	return &SongRoutes{
+func NewHandler(svc services.SongService) *SongHanlder {
+	return &SongHanlder{
 		songService: svc,
 	}
 }
