@@ -28,7 +28,17 @@ services:
     networks:
       - app-network
 
-
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: swagger-ui
+    environment:
+      - SWAGGER_JSON=/swagger/openapi.yaml
+    volumes:
+      - ../docs/openapi.yaml:/swagger/openapi.yaml # Map the correct path
+    ports:
+      - 8082:8080
+    networks:
+      - app-network
 
 networks:
   app-network:

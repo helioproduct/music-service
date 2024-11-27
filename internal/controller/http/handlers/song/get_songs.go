@@ -82,7 +82,6 @@ func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if limitStr := query.Get("limit"); limitStr != "" {
-		h.logger.Info("Get songs handler", "got limit", limitStr)
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil || limit < 0 {
 			http.Error(w, "invalid limit, must be a non-negative integer", http.StatusBadRequest)
@@ -92,8 +91,6 @@ func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if offsetStr := query.Get("offset"); offsetStr != "" {
-		h.logger.Info("Get songs handler", "got offset", offsetStr)
-
 		offset, err := strconv.Atoi(offsetStr)
 		if err != nil || offset < 0 {
 			http.Error(w, "invalid offset, must be a non-negative integer", http.StatusBadRequest)
@@ -102,22 +99,23 @@ func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 		req.Offset = offset
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request payload", http.StatusBadRequest)
-		return
-	}
+	req.ReleaseDate = query.Get("release_date")
+	req.Lyrics = query.Get("lyrics")
+	req.Link = query.Get("link")
+	req.GroupName = query.Get("group")
 
 	if err := req.Validate(); err != nil {
+		h.logger.Error("GetSongs", "validate error", err, "req", req)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	filter, err := BuildSongFilterFromRequest(req)
 	if err != nil {
+		h.logger.Error("GetSongs", "build filter error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	h.logger.Info("Get songs handler", "filter", filter)
 
 	songs, err := h.songService.GetSongs(r.Context(), filter)
 	if err != nil {

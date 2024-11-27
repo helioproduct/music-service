@@ -1,15 +1,17 @@
 openapi: 3.0.3
+
 info:
   title: Music Service API
   description: API для онлайн библиотеки песен
   version: 1.0.0
+
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8080/api
     description: Local server
 
 paths:  
   /songs:
-    post:
+    put:
       summary: Добавить новую песню
       requestBody:
         description: Данные песни
@@ -19,14 +21,17 @@ paths:
             schema:
               $ref: '#/components/schemas/AddSongRequest'
       responses:
-        '201':
+        '200':
           description: Песня успешно добавлена
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Song'
         '400':
-          description: Неверный запрос
+          description: Пустое имя или название группы
+        '500':
+          description: Internal server error
+
     delete:
       summary: Удалить песню
       parameters:
@@ -43,25 +48,42 @@ paths:
           description: Неверный запрос
         '404':
           description: Песня не найдена
+
     get:
       summary: Получить список песен с фильтрацией
+      description: Получение списка песен с возможностью фильтрации по различным полям.
       parameters:
+        
         - name: group
           in: query
           schema:
             type: string
           description: Название группы
+          example: Madonna
+
         - name: release_date
           in: query
           schema:
             type: string
             format: date
-          description: Дата выхода песни
+          description: Дата релиза песни
+          example: 2008-08-08
+        
         - name: lyrics
           in: query
           schema:
             type: string
-          description: Текст песни
+          description: Поиск совпадений в тексте песни (string matching)
+          example: incredible
+        
+        - name: link
+          in: query
+          schema:
+            type: string
+            format: uri
+          description: Ссылка на песню
+          example: https://example.com/incredible
+        
         - name: limit
           in: query
           schema:
@@ -78,7 +100,7 @@ paths:
           description: Смещение для пагинации
       responses:
         '200':
-          description: Список песен
+          description: Успешное получение списка песен
           content:
             application/json:
               schema:
@@ -87,7 +109,11 @@ paths:
                   $ref: '#/components/schemas/Song'
         '400':
           description: Неверный запрос
-    put:
+        '500':
+          description: Внутренняя ошибка сервера
+
+
+    patch:
       summary: Обновить песню
       requestBody:
         description: Данные для обновления песни
@@ -104,7 +130,7 @@ paths:
         '404':
           description: Песня не найдена
 
-  /songs/lyrics:
+  /lyrics:
     get:
       summary: Получить текст песни с пагинацией
       parameters:
@@ -114,20 +140,21 @@ paths:
           schema:
             type: integer
           description: Идентификатор песни
+          example: 7
         - name: offset
           in: query
           schema:
             type: integer
             default: 0
             minimum: 0
-          description: Смещение для начала текста
+          description: Начинать с куплета
         - name: limit
           in: query
           schema:
             type: integer
             default: 10
             minimum: 1
-          description: Количество строк текста
+          description: Количество куплетов
       responses:
         '200':
           description: Текст песни
@@ -178,19 +205,24 @@ components:
     Song:
       type: object
       properties:
-        id:
+        ID:
           type: integer
-        name:
+        Name:
           type: string
-        release_date:
+        ReleaseDate:
           type: string
           format: date
-        lyrics:
+        Lyrics:
           type: string
-        link:
+        Link:
           type: string
-        group_id:
-          type: integer
+        Group:
+          type: object
+          properties:
+            ID:
+              type: integer
+            Name:
+              type: string
 
     GetLyricsResponse:
       type: object

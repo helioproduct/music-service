@@ -19,6 +19,7 @@ func (h *SongHandler) DeleteSong(w http.ResponseWriter, r *http.Request) {
 
 	songID, err := strconv.Atoi(songIDStr)
 	if err != nil || songID <= 0 {
+		h.logger.Error("DeleteSongs", "error", err)
 		http.Error(w, "invalid songID query parameter", http.StatusBadRequest)
 		return
 	}
