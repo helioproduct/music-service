@@ -1,0 +1,204 @@
+openapi: 3.0.3
+info:
+  title: Music Service API
+  description: API для онлайн библиотеки песен
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local server
+
+paths:  
+  /songs:
+    post:
+      summary: Добавить новую песню
+      requestBody:
+        description: Данные песни
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSongRequest'
+      responses:
+        '201':
+          description: Песня успешно добавлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Song'
+        '400':
+          description: Неверный запрос
+    delete:
+      summary: Удалить песню
+      parameters:
+        - name: songID
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Идентификатор песни
+      responses:
+        '200':
+          description: Песня успешно удалена
+        '400':
+          description: Неверный запрос
+        '404':
+          description: Песня не найдена
+    get:
+      summary: Получить список песен с фильтрацией
+      parameters:
+        - name: group
+          in: query
+          schema:
+            type: string
+          description: Название группы
+        - name: release_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Дата выхода песни
+        - name: lyrics
+          in: query
+          schema:
+            type: string
+          description: Текст песни
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 0
+          description: Количество песен для отображения
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Смещение для пагинации
+      responses:
+        '200':
+          description: Список песен
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Song'
+        '400':
+          description: Неверный запрос
+    put:
+      summary: Обновить песню
+      requestBody:
+        description: Данные для обновления песни
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSongRequest'
+      responses:
+        '200':
+          description: Песня успешно обновлена
+        '400':
+          description: Неверный запрос
+        '404':
+          description: Песня не найдена
+
+  /songs/lyrics:
+    get:
+      summary: Получить текст песни с пагинацией
+      parameters:
+        - name: song_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Идентификатор песни
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Смещение для начала текста
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+          description: Количество строк текста
+      responses:
+        '200':
+          description: Текст песни
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLyricsResponse'
+        '400':
+          description: Неверный запрос
+
+components:
+  schemas:
+    AddSongRequest:
+      type: object
+      required:
+        - song
+        - group
+      properties:
+        song:
+          type: string
+          example: Hey Jude
+        group:
+          type: string
+          example: The Beatles
+
+    UpdateSongRequest:
+      type: object
+      required:
+        - song_id
+      properties:
+        song_id:
+          type: integer
+          example: 1
+        new_name:
+          type: string
+          example: Hey Jude Updated
+        release_date:
+          type: string
+          format: date
+          example: 1968-08-30
+        lyrics:
+          type: string
+          example: "Hey Jude, don't make it bad..."
+        link:
+          type: string
+          example: https://example.com/hey-jude
+
+    Song:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        release_date:
+          type: string
+          format: date
+        lyrics:
+          type: string
+        link:
+          type: string
+        group_id:
+          type: integer
+
+    GetLyricsResponse:
+      type: object
+      properties:
+        verses:
+          type: array
+          items:
+            type: string
+          example:
+            - "Hey Jude, don't make it bad."
+            - "Take a sad song and make it better."
