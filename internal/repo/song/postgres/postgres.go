@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"music-service/internal/domain"
 	"music-service/internal/repo"
 	"strings"
@@ -37,11 +38,14 @@ func (s *PostgresRepo) AddSong(ctx context.Context, song *domain.Song) error {
 		if err == sql.ErrNoRows {
 			// Group does not exist, insert it
 			err = tx.QueryRowContext(ctx, insertGroupQuery, song.Group.Name).Scan(&groupID)
+			// fmt.Println()
 			if err != nil {
+				log.Println()
 				return fmt.Errorf("error inserting group: %w", err)
 			}
 			// update ID in struct
 			song.Group.ID = groupID
+			log.Println("NEW GROUP ID", groupID)
 		} else {
 			return fmt.Errorf("error checking group existence: %w", err)
 		}

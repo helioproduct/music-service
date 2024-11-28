@@ -61,6 +61,7 @@ func main() {
 	api := r.PathPrefix("/api").Subrouter()
 
 	api.HandleFunc("/songs", songsHandler.GetSongs).Methods("GET")
+	api.HandleFunc("/songs", songsHandler.AddSong).Methods("PUT")
 
 	done := make(chan bool)
 

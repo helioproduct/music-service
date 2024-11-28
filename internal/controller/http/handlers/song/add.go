@@ -1,6 +1,11 @@
 package song
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"music-service/internal/domain"
+	"net/http"
+)
 
 type AddSongRequest struct {
 	Song  string `json:"song"`
@@ -15,4 +20,38 @@ func (r *AddSongRequest) Validate() error {
 		return fmt.Errorf("group cannot be empty")
 	}
 	return nil
+}
+
+func (h *SongHandler) AddSong(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Add song handler hit")
+
+	// Decode the request body
+	var req AddSongRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Validate the request
+	if err := req.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Prepare the domain Song object
+	song := &domain.Song{
+		Name:  req.Song,
+		Group: &domain.Group{Name: req.Group},
+	}
+
+	// Call the service layer to add the song
+	if err := h.songService.AddSong(r.Context(), song); err != nil {
+		h.logger.Error("failed to add song", err)
+		http.Error(w, "failed to add song", http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with success
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprintln(w, "Song added successfully")
 }

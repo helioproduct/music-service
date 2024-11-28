@@ -20,6 +20,7 @@ func NewSongService(repo repo.SongRepo) services.SongService {
 }
 
 func (s *songService) AddSong(ctx context.Context, song *domain.Song) error {
+	// Validate the input
 	if song == nil {
 		return repo.ErrSongIsNil
 	}
@@ -28,21 +29,30 @@ func (s *songService) AddSong(ctx context.Context, song *domain.Song) error {
 		return services.ErrInvalidSong
 	}
 
+	// Fetch additional details from the external API
 	details, err := FetchSongDetails(s.apiURL, song.Group.Name, song.Name)
 	if err != nil {
 		return fmt.Errorf("failed to fetch song details from external API: %w", err)
 	}
 
-	song.ReleaseDate, err = time.Parse(time.DateOnly, details.ReleaseDate)
-	if err != nil {
-		return services.ErrParsingDate
+	// Map fields from the external API to the song
+	if details.ReleaseDate != "" {
+		song.ReleaseDate, err = time.Parse(time.DateOnly, details.ReleaseDate)
+		if err != nil {
+			return services.ErrParsingDate
+		}
+	}
+	if details.Text != "" {
+		song.Lyrics = details.Text
+	}
+	if details.Link != "" {
+		song.Link = details.Link
 	}
 
-	song.Lyrics = details.Text
-	song.Link = details.Link
+	// Log the updated song object for debugging
+	log.Printf("Adding new song: %+v\n", song)
 
-	log.Println("NEW SONG", song)
-
+	// Save the song to the repository
 	return s.repo.AddSong(ctx, song)
 }
 
