@@ -6,7 +6,7 @@ import (
 	"music-service/internal/domain"
 	"music-service/internal/repo"
 	"music-service/internal/services"
-	"time"
+	"music-service/pkg/timex"
 )
 
 type songService struct {
@@ -19,24 +19,18 @@ func NewSongService(apiURL string, repo repo.SongRepo) services.SongService {
 }
 
 func (s *songService) AddSong(ctx context.Context, song *domain.Song) (*domain.Song, error) {
-	// Validate the input
 	if song == nil {
 		return nil, domain.ErrSongIsNil
-	}
-
-	if song.Group == nil || song.Group.Name == "" || song.Name == "" {
-		return nil, services.ErrInvalidSong
 	}
 
 	details, err := FetchSongDetails(s.apiURL, song.Group.Name, song.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch song details from external API: %w", err)
 	}
-
 	if details.ReleaseDate != "" {
-		song.ReleaseDate, err = time.Parse(time.DateOnly, details.ReleaseDate)
+		song.ReleaseDate, err = timex.ParseDateOnly(details.ReleaseDate)
 		if err != nil {
-			return nil, services.ErrParsingDate
+			return nil, err
 		}
 	}
 	if details.Text != "" {
@@ -46,6 +40,10 @@ func (s *songService) AddSong(ctx context.Context, song *domain.Song) (*domain.S
 		song.Link = details.Link
 	}
 
+	err = song.Validate()
+	if err != nil {
+		return nil, err
+	}
 	return song, s.repo.AddSong(ctx, song)
 }
 

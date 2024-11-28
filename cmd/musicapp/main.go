@@ -10,7 +10,7 @@ import (
 	"net/http"
 
 	songshandler "music-service/internal/controller/http/handlers/song"
-	"music-service/internal/controller/http/middleware"
+	middleware "music-service/internal/controller/http/middleware"
 	songsrepo "music-service/internal/repo/song/postgres"
 	songservice "music-service/internal/services/song"
 
@@ -29,7 +29,7 @@ func main() {
 
 	migrator, err := migrations.NewMigrator(cfg.Postgres.Migrations, cfg.Postgres.URI)
 	if err != nil {
-		logger.Fatal("error initing migrator", err)
+		logger.Fatal("error initing migrator", "error", err)
 	}
 
 	err = migrator.Up()
@@ -37,19 +37,21 @@ func main() {
 		if errors.Is(err, migrations.ErrNoChange) {
 			logger.Info("no migrations to apply")
 		} else {
-			logger.Fatal("error making migrations", err)
+			logger.Fatal("error making migrations", "error", err)
 		}
 	}
 
 	db, err := sql.Open("postgres", cfg.Postgres.URI)
 	if err != nil {
-		logger.Fatal("error connecting to db", err)
+		logger.Fatal("error connecting to db", "error", err)
 		log.Fatal(err)
 	}
 
 	pingErr := db.Ping()
 	if pingErr != nil {
-		logger.Fatal("error db ping", err)
+		logger.Fatal("error db ping", "error", err)
+	} else {
+		logger.Info("connected to db")
 	}
 
 	songsRepo := songsrepo.NewPostgres(db)
@@ -63,6 +65,7 @@ func main() {
 	api.HandleFunc("/songs", songsHandler.AddSong).Methods("PUT")
 	api.HandleFunc("/lyrics", songsHandler.GetLyrics).Methods("GET")
 	api.HandleFunc("/songs", songsHandler.DeleteSong).Methods("DELETE")
+	api.HandleFunc("/songs", songsHandler.UpdateSong).Methods("PATCH")
 
 	r.Use(middleware.Logging(logger))
 	r.Use(middleware.PanicRecoverer(logger))
@@ -70,13 +73,13 @@ func main() {
 	done := make(chan bool)
 
 	go func() {
-		err := http.ListenAndServe("localhost:"+cfg.HTTP.Port, r)
+		err := http.ListenAndServe(cfg.HTTP.Address+":"+cfg.HTTP.Port, r)
 		if err != nil {
 			logger.Error("server", "error", err)
 		}
 		done <- true
 	}()
 
-	logger.Info("started server at", cfg.HTTP.Port)
+	logger.Info("started server at", "PORT", cfg.HTTP.Port)
 	<-done
 }

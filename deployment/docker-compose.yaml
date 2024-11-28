@@ -1,14 +1,35 @@
 services:
-  postgres:
-    image: postgres:17.2
+  app:
+    restart: always
+    depends_on: 
+      - postgres
+
+    build:
+      context: ..
+      dockerfile: ./deployment/Dockerfile
+     
     ports:
-      - 5432:5432
+      - 8080:8080
+    
+    networks:
+      - app-network
+
+  postgres:
+    container_name: postgres
+    image: postgres:17.2
+
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=pass
       - POSTGRES_DB=music
+    ports:
+      - 5432:5432
 
-  # app:
-  #   image: 
+    networks:
+      - app-network
 
-    
+
+
+networks:
+  app-network:
+    driver: bridge

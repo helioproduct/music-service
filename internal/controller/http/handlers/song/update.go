@@ -2,47 +2,42 @@ package song
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"music-service/internal/domain"
+	"music-service/pkg/timex"
+	"music-service/pkg/urlcheck"
 	"net/http"
-	"strconv"
+	"time"
 )
 
 type UpdateSongRequest struct {
-	Name        string `json:"name"`
-	ReleaseDate string `json:"release_date"`
-	Lyrics      string `json:"lyrics"`
-	Link        string `json:"link"`
-	GroupID     int    `json:"group_id"`
+	SongID         int    `json:"song_id"`
+	NewName        string `json:"new_name"`
+	NewReleaseDate string `json:"release_date"`
+	NewLyrics      string `json:"lyrics"`
+	NewLink        string `json:"link"`
 }
 
 func (req *UpdateSongRequest) Validate() error {
-	if req.Name == "" {
-		return fmt.Errorf("name cannot be empty")
+	if req.SongID <= 0 {
+		return fmt.Errorf("song_id must be positive")
 	}
-	if req.ReleaseDate == "" {
-		return fmt.Errorf("release date cannot be empty")
+	if req.NewReleaseDate != "" {
+		if _, err := timex.ParseDateOnly(req.NewReleaseDate); err != nil {
+			return err
+		}
 	}
-	if req.GroupID <= 0 {
-		return fmt.Errorf("group_id must be a positive integer")
+	if req.NewLink != "" {
+		if err := urlcheck.IsValidURL(req.NewLink); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (h *SongHandler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Update song handler hit")
-
-	songIDStr := r.URL.Query().Get("songID")
-	if songIDStr == "" {
-		http.Error(w, "missing songID query parameter", http.StatusBadRequest)
-		return
-	}
-
-	songID, err := strconv.Atoi(songIDStr)
-	if err != nil || songID <= 0 {
-		http.Error(w, "invalid songID query parameter", http.StatusBadRequest)
-		return
-	}
 
 	var req UpdateSongRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -55,20 +50,33 @@ func (h *SongHandler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Prepare the updated song object
-	updatedSong := &domain.Song{
-		Name:        req.Name,
-		ReleaseDate: req.ReleaseDate,
-		Lyrics:      req.Lyrics,
-		Link:        req.Link,
-		Group: &domain.Group{
-			ID: req.GroupID,
-		},
+	updatedSong := new(domain.Song)
+	if req.NewName != "" {
+		updatedSong.Name = req.NewName
+	}
+	if req.NewReleaseDate != "" {
+		newTime, _ := time.Parse(time.DateOnly, req.NewReleaseDate)
+		updatedSong.ReleaseDate = newTime
+	}
+	if req.NewLyrics != "" {
+		updatedSong.Lyrics = req.NewLyrics
+	}
+	if req.NewLink != "" {
+		updatedSong.Link = req.NewLink
 	}
 
-	err = h.songService.UpdateSong(r.Context(), songID, updatedSong)
+	err := h.songService.UpdateSong(r.Context(), req.SongID, updatedSong)
 	if err != nil {
-		h.logger.Error("failed to update song", err)
+		h.logger.Error("failed to update song", "error", err)
+		if errors.Is(err, domain.ErrNoSuchSong) {
+			h.logger.Error("failed to delete song", err)
+			if errors.Is(err, domain.ErrNoSuchSong) {
+				http.Error(w, fmt.Sprintf("failed to delete song: %v", err), http.StatusNotFound)
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+		}
+
 		http.Error(w, "failed to update song", http.StatusInternalServerError)
 		return
 	}

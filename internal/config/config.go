@@ -14,7 +14,8 @@ type PostgresConfig struct {
 }
 
 type HTTPConfig struct {
-	Port string `env:"HTTP_PORT"`
+	Address string
+	Port    string `env:"HTTP_PORT"`
 }
 
 type Config struct {
@@ -36,7 +37,8 @@ func LoadConfig() (*Config, error) {
 			Migrations: os.Getenv("POSTGRES_MIGRATIONS"),
 		},
 		HTTP: HTTPConfig{
-			Port: os.Getenv("HTTP_PORT"),
+			Port:    os.Getenv("HTTP_Port"),
+			Address: os.Getenv("HTTP_Address"),
 		},
 		SongsInfoURL: os.Getenv("SongsInfoURL"),
 	}
