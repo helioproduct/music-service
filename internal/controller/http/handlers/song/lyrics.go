@@ -16,12 +16,10 @@ type GetLyricsResponse struct {
 func (h *SongHandler) GetLyrics(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Get lyrics handler hit")
 
-	// Parse query parameters
 	songIDStr := r.URL.Query().Get("song_id")
 	offsetStr := r.URL.Query().Get("offset")
 	limitStr := r.URL.Query().Get("limit")
 
-	// Validate and convert query parameters
 	songID, err := strconv.Atoi(songIDStr)
 	if err != nil || songID <= 0 {
 		http.Error(w, "invalid song_id parameter", http.StatusBadRequest)
@@ -41,8 +39,6 @@ func (h *SongHandler) GetLyrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lyricsResponse := new(GetLyricsResponse)
-
-	// Call the service method to get lyrics
 	lyricsResponse.Verses, err = h.songService.GetLyrics(r.Context(), songID, offset, limit)
 	if err != nil {
 		h.logger.Error("failed to get lyrics", err)
@@ -50,7 +46,6 @@ func (h *SongHandler) GetLyrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Respond with the lyrics
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(lyricsResponse); err != nil {
 		h.logger.Error("failed to write response", err)
