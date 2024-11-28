@@ -3,7 +3,7 @@ package song
 import (
 	"errors"
 	"fmt"
-	"music-service/internal/repo"
+	"music-service/internal/domain"
 	"net/http"
 	"strconv"
 )
@@ -25,7 +25,7 @@ func (h *SongHandler) DeleteSong(w http.ResponseWriter, r *http.Request) {
 
 	err = h.songService.DeleteSong(r.Context(), songID)
 	if err != nil {
-		if errors.Is(err, repo.ErrNoSuchSong) {
+		if errors.Is(err, domain.ErrNoSuchSong) {
 			http.Error(w, fmt.Sprintf("failed to delete song: %v", err), http.StatusNotFound)
 			return
 		}

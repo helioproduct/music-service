@@ -21,7 +21,7 @@ func NewSongService(apiURL string, repo repo.SongRepo) services.SongService {
 func (s *songService) AddSong(ctx context.Context, song *domain.Song) (*domain.Song, error) {
 	// Validate the input
 	if song == nil {
-		return nil, repo.ErrSongIsNil
+		return nil, domain.ErrSongIsNil
 	}
 
 	if song.Group == nil || song.Group.Name == "" || song.Name == "" {

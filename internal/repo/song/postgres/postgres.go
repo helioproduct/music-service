@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"music-service/internal/domain"
-	"music-service/internal/repo"
 	"strings"
 )
 
@@ -64,12 +63,12 @@ func (s *PostgresRepo) AddSong(ctx context.Context, song *domain.Song) error {
 
 func (s *PostgresRepo) UpdateSong(ctx context.Context, songID int, updatedSong *domain.Song) error {
 	if updatedSong == nil {
-		return repo.ErrSongIsNil
+		return domain.ErrSongIsNil
 	}
 	result, err := s.db.ExecContext(ctx, updateQuery, updatedSong.ReleaseDate, updatedSong.Lyrics, updatedSong.Link, songID)
 	affected, _ := result.RowsAffected()
 	if affected < 1 {
-		return repo.ErrNoSuchSong
+		return domain.ErrNoSuchSong
 	}
 	return err
 }
@@ -83,7 +82,7 @@ func (s *PostgresRepo) GetSong(ctx context.Context, songID int) (*domain.Song, e
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, repo.ErrNoSuchSong
+			return nil, domain.ErrNoSuchSong
 		}
 		return nil, err
 	}
@@ -95,14 +94,14 @@ func (s *PostgresRepo) DeleteSong(ctx context.Context, songID int) error {
 	result, err := s.db.ExecContext(ctx, deleteQuery, songID)
 	affected, _ := result.RowsAffected()
 	if affected < 1 {
-		return repo.ErrNoSuchSong
+		return domain.ErrNoSuchSong
 	}
 	return err
 }
 
 func (r *PostgresRepo) ListSongs(ctx context.Context, filter *domain.SongFilter) ([]*domain.Song, error) {
 	if filter == nil {
-		return nil, repo.ErrFilterIsNil
+		return nil, domain.ErrFilterIsNil
 	}
 	query := listSongsQuery
 	// Conditions and arguments
