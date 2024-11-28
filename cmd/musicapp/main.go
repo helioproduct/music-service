@@ -62,6 +62,7 @@ func main() {
 
 	api.HandleFunc("/songs", songsHandler.GetSongs).Methods("GET")
 	api.HandleFunc("/songs", songsHandler.AddSong).Methods("PUT")
+	api.HandleFunc("/lyrics", songsHandler.GetLyrics).Methods("GET")
 
 	done := make(chan bool)
 
