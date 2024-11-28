@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"music-service/internal/domain"
 	"music-service/internal/repo"
 	"music-service/internal/services"
@@ -9,25 +10,43 @@ import (
 )
 
 type songService struct {
-	repo repo.SongRepo
+	apiURL string
+	repo   repo.SongRepo
 }
 
-func NewSongService(repo repo.SongRepo) services.SongService {
+func NewSongService(apiURL string, repo repo.SongRepo) services.SongService {
 	return &songService{repo: repo}
 }
 
-func (s *songService) AddSong(ctx context.Context, song *domain.Song) error {
+func (s *songService) AddSong(ctx context.Context, song *domain.Song) (*domain.Song, error) {
+	// Validate the input
 	if song == nil {
-		return repo.ErrSongIsNil
+		return nil, domain.ErrSongIsNil
 	}
 
-	var err error
-	song.ReleaseDate, err = time.Parse(time.DateOnly, song.ReleaseDate.Format(time.DateOnly))
+	if song.Group == nil || song.Group.Name == "" || song.Name == "" {
+		return nil, services.ErrInvalidSong
+	}
+
+	details, err := FetchSongDetails(s.apiURL, song.Group.Name, song.Name)
 	if err != nil {
-		return services.ErrParsingDate
+		return nil, fmt.Errorf("failed to fetch song details from external API: %w", err)
 	}
 
-	return s.repo.AddSong(ctx, song)
+	if details.ReleaseDate != "" {
+		song.ReleaseDate, err = time.Parse(time.DateOnly, details.ReleaseDate)
+		if err != nil {
+			return nil, services.ErrParsingDate
+		}
+	}
+	if details.Text != "" {
+		song.Lyrics = details.Text
+	}
+	if details.Link != "" {
+		song.Link = details.Link
+	}
+
+	return song, s.repo.AddSong(ctx, song)
 }
 
 func (s *songService) UpdateSong(ctx context.Context, songID int, updatedSong *domain.Song) error {
@@ -42,7 +61,7 @@ func (s *songService) DeleteSong(ctx context.Context, songID int) error {
 	return s.repo.DeleteSong(ctx, songID)
 }
 
-func (s *songService) ListSongs(ctx context.Context, filter *repo.SongFilter) ([]*domain.Song, error) {
+func (s *songService) GetSongs(ctx context.Context, filter *domain.SongFilter) ([]*domain.Song, error) {
 	return s.repo.ListSongs(ctx, filter)
 }
 

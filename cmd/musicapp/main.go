@@ -1,22 +1,20 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"music-service/internal/config"
-	"music-service/internal/domain"
 	"music-service/pkg/logger"
 	"music-service/pkg/migrations"
-	"time"
+	"net/http"
 
-	songrepo "music-service/internal/repo/song/postgres"
+	songshandler "music-service/internal/controller/http/handlers/song"
+	"music-service/internal/controller/http/middleware"
+	songsrepo "music-service/internal/repo/song/postgres"
 	songservice "music-service/internal/services/song"
 
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -53,86 +51,32 @@ func main() {
 	if pingErr != nil {
 		logger.Fatal("error db ping", err)
 	}
-	fmt.Println("Connected!")
 
-	// updateSong := &domain.Song{
-	// 	Name:        "NEW NAME OLD TAPES",
-	// 	Lyrics:      song.Lyrics,
-	// 	ReleaseDate: time.Now().Add(time.Duration(time.Now().Year())),
-	// 	Link:        "helio.com",
-	// 	Group:       song.Group,
-	// }
+	songsRepo := songsrepo.NewPostgres(db)
+	songService := songservice.NewSongService(cfg.SongsInfoURL, songsRepo)
+	songsHandler := songshandler.NewHandler(songService, logger)
 
-	// err = songStorage.AddSong(context.Background(), song)
-	// if err != nil {
-	// 	logger.Info("error adding song", "error", err)
-	// }
+	r := mux.NewRouter()
+	api := r.PathPrefix("/api").Subrouter()
 
-	// song, err := songStorage.GetSong(context.Background(), 1)
-	// if err != nil {
-	// 	logger.Error("error getting song by id", "error", err)
-	// 	return
-	// }
+	api.HandleFunc("/songs", songsHandler.GetSongs).Methods("GET")
+	api.HandleFunc("/songs", songsHandler.AddSong).Methods("PUT")
+	api.HandleFunc("/lyrics", songsHandler.GetLyrics).Methods("GET")
+	api.HandleFunc("/songs", songsHandler.DeleteSong).Methods("DELETE")
 
-	// fmt.Println(song)
-	// fmt.Println(song.Group)
+	r.Use(middleware.Logging(logger))
+	r.Use(middleware.PanicRecoverer(logger))
 
-	// err = songStorage.DeleteSong(context.Background(), 2)
-	// if err != nil {
-	// 	logger.Error("error deleting song", "error", err)
-	// 	return
-	// }
+	done := make(chan bool)
 
-	// err = songStorage.UpdateSong(context.Background(), 3, updateSong)
-	// if err != nil {
-	// 	logger.Error("error updateing song", "error", err)
-	// }
+	go func() {
+		err := http.ListenAndServe("localhost:"+cfg.HTTP.Port, r)
+		if err != nil {
+			logger.Error("server", "error", err)
+		}
+		done <- true
+	}()
 
-	// filter := &repo.SongFilter{
-	// 	Lyrics:    "fuck",
-	// 	GroupName: "popov",
-	// 	Limit:     5,
-	// }
-
-	// songs, err := songStorage.ListSongs(context.Background(), filter)
-	// if err != nil {
-	// 	logger.Error("error filtering", "error", err)
-	// 	return
-	// }
-
-	// for _, song := range songs {
-	// 	fmt.Println(song)
-	// 	fmt.Println(song.Group)
-	// 	fmt.Println()
-	// }
-
-	// verses, err := songsRepo.GetLyrics(context.Background(), 3, 3, 1)
-	// if err != nil {
-	// 	log.Fatalf("error retrieving lyrics: %v", err)
-	// }
-
-	// for i, verse := range verses {
-	// 	fmt.Printf("Verse %d:\n%s\n\n", i+1, verse)
-	// }
-
-	songsRepo := songrepo.NewPostgres(db)
-	songSvc := songservice.NewSongService(songsRepo)
-
-	group := &domain.Group{
-		Name: "helioproduct",
-	}
-
-	song := &domain.Song{
-		Name:        "helio2",
-		Lyrics:      "fuck this wo,an",
-		Group:       group,
-		ReleaseDate: time.Now(),
-		Link:        "ya.ru",
-	}
-
-	err = songSvc.AddSong(context.Background(), song)
-	if err != nil {
-		logger.Error("service error adding song", "error", err)
-	}
-
+	logger.Info("started server at", cfg.HTTP.Port)
+	<-done
 }

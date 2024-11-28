@@ -52,7 +52,7 @@ func main() {
 				logger.Fatal("error making migrations", err)
 			}
 		}
-		logger.Info("Up migrations applied successfully")
+		logger.Info("Down migrations applied successfully")
 
 	default:
 		log.Println("Unknown command. Usage: main <command> (up | down)")
