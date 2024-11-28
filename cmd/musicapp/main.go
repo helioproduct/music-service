@@ -10,11 +10,10 @@ import (
 	"net/http"
 
 	songshandler "music-service/internal/controller/http/handlers/song"
+	"music-service/internal/controller/http/middleware"
 	songsrepo "music-service/internal/repo/song/postgres"
 	songservice "music-service/internal/services/song"
 
-	// _ "github.com/golang-migrate/migrate/v4/database/postgres"
-	// _ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/gorilla/mux"
 )
 
@@ -63,6 +62,9 @@ func main() {
 	api.HandleFunc("/songs", songsHandler.GetSongs).Methods("GET")
 	api.HandleFunc("/songs", songsHandler.AddSong).Methods("PUT")
 	api.HandleFunc("/lyrics", songsHandler.GetLyrics).Methods("GET")
+
+	r.Use(middleware.Logging(logger))
+	r.Use(middleware.PanicRecoverer(logger))
 
 	done := make(chan bool)
 
