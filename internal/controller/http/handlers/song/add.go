@@ -25,14 +25,12 @@ func (r *AddSongRequest) Validate() error {
 func (h *SongHandler) AddSong(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Add song handler hit")
 
-	// Decode the request body
 	var req AddSongRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	// Validate the request
 	if err := req.Validate(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -45,13 +43,21 @@ func (h *SongHandler) AddSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the service layer to add the song
-	if err := h.songService.AddSong(r.Context(), song); err != nil {
+	var err error
+	if song, err = h.songService.AddSong(r.Context(), song); err != nil {
 		h.logger.Error("failed to add song", err)
 		http.Error(w, "failed to add song", http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(song); err != nil {
+		h.logger.Error("failed to write response", err)
+		http.Error(w, "failed to write response", http.StatusInternalServerError)
+		return
+	}
+
 	// Respond with success
-	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintln(w, "Song added successfully")
+	// w.WriteHeader(http.StatusCreated)
+	// fmt.Fprintln(w, "Song added successfully")
 }

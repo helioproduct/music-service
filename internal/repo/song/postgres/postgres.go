@@ -36,14 +36,11 @@ func (s *PostgresRepo) AddSong(ctx context.Context, song *domain.Song) error {
 	err = tx.QueryRowContext(ctx, "SELECT id FROM groups WHERE name = $1", song.Group.Name).Scan(&groupID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// Group does not exist, insert it
 			err = tx.QueryRowContext(ctx, insertGroupQuery, song.Group.Name).Scan(&groupID)
-			// fmt.Println()
 			if err != nil {
 				log.Println()
 				return fmt.Errorf("error inserting group: %w", err)
 			}
-			// update ID in struct
 			song.Group.ID = groupID
 			log.Println("NEW GROUP ID", groupID)
 		} else {
@@ -51,12 +48,12 @@ func (s *PostgresRepo) AddSong(ctx context.Context, song *domain.Song) error {
 		}
 	}
 
-	_, err = tx.ExecContext(ctx, insertSongQuery,
+	err = tx.QueryRowContext(ctx, insertSongQuery,
 		song.Name,
 		song.ReleaseDate,
 		song.Lyrics,
 		song.Link,
-		groupID)
+		groupID).Scan(&song.ID)
 
 	if err != nil {
 		return fmt.Errorf("error inserting song: %w", err)

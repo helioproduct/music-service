@@ -3,7 +3,8 @@ package postgres
 var (
 	insertSongQuery = `
 		INSERT INTO songs (name, release_date, lyrics, link, group_id)
-		VALUES ($1, $2, $3, $4, $5)`
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id`
 
 	insertGroupQuery = "INSERT INTO groups (name) VALUES ($1) RETURNING id"
 
