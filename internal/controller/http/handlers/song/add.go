@@ -35,14 +35,11 @@ func (h *SongHandler) AddSong(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	// Prepare the domain Song object
 	song := &domain.Song{
 		Name:  req.Song,
 		Group: &domain.Group{Name: req.Group},
 	}
 
-	// Call the service layer to add the song
 	var err error
 	if song, err = h.songService.AddSong(r.Context(), song); err != nil {
 		h.logger.Error("failed to add song", err)
@@ -56,8 +53,4 @@ func (h *SongHandler) AddSong(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to write response", http.StatusInternalServerError)
 		return
 	}
-
-	// Respond with success
-	// w.WriteHeader(http.StatusCreated)
-	// fmt.Fprintln(w, "Song added successfully")
 }
