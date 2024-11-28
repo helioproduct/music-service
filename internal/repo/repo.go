@@ -10,6 +10,6 @@ type SongRepo interface {
 	UpdateSong(ctx context.Context, songID int, updatedSong *domain.Song) error
 	GetSong(ctx context.Context, songID int) (*domain.Song, error)
 	DeleteSong(ctx context.Context, songID int) error
-	ListSongs(ctx context.Context, filter *SongFilter) ([]*domain.Song, error)
+	ListSongs(ctx context.Context, filter *domain.SongFilter) ([]*domain.Song, error)
 	GetLyrics(ctx context.Context, songID, offset, limit int) ([]string, error)
 }

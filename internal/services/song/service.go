@@ -42,7 +42,7 @@ func (s *songService) DeleteSong(ctx context.Context, songID int) error {
 	return s.repo.DeleteSong(ctx, songID)
 }
 
-func (s *songService) ListSongs(ctx context.Context, filter *repo.SongFilter) ([]*domain.Song, error) {
+func (s *songService) GetSongs(ctx context.Context, filter *domain.SongFilter) ([]*domain.Song, error) {
 	return s.repo.ListSongs(ctx, filter)
 }
 
