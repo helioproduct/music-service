@@ -16,6 +16,12 @@ CREATE TABLE songs (
 CREATE SEQUENCE IF NOT EXISTS groups_id_seq START 1;
 ALTER TABLE groups ALTER COLUMN id SET DEFAULT nextval('groups_id_seq');
 
+-- indexes
+CREATE UNIQUE INDEX idx_groups_name ON "groups" (name);
+CREATE INDEX idx_songs_group_id ON songs (group_id);
+CREATE INDEX idx_songs_name ON songs (name);
+CREATE INDEX idx_songs_release_date_group_id ON songs (release_date, group_id);
+
 
 ---------------------
 ---Тестовые данные---
