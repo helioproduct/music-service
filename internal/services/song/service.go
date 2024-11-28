@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"music-service/internal/domain"
 	"music-service/internal/repo"
 	"music-service/internal/services"
@@ -9,7 +11,8 @@ import (
 )
 
 type songService struct {
-	repo repo.SongRepo
+	apiURL string
+	repo   repo.SongRepo
 }
 
 func NewSongService(repo repo.SongRepo) services.SongService {
@@ -21,11 +24,24 @@ func (s *songService) AddSong(ctx context.Context, song *domain.Song) error {
 		return repo.ErrSongIsNil
 	}
 
-	var err error
-	song.ReleaseDate, err = time.Parse(time.DateOnly, song.ReleaseDate.Format(time.DateOnly))
+	if song.Group == nil || song.Group.Name == "" || song.Name == "" {
+		return services.ErrInvalidSong
+	}
+
+	details, err := FetchSongDetails(s.apiURL, song.Group.Name, song.Name)
+	if err != nil {
+		return fmt.Errorf("failed to fetch song details from external API: %w", err)
+	}
+
+	song.ReleaseDate, err = time.Parse(time.DateOnly, details.ReleaseDate)
 	if err != nil {
 		return services.ErrParsingDate
 	}
+
+	song.Lyrics = details.Text
+	song.Link = details.Link
+
+	log.Println("NEW SONG", song)
 
 	return s.repo.AddSong(ctx, song)
 }

@@ -54,13 +54,13 @@ func main() {
 	}
 
 	songsRepo := songsrepo.NewPostgres(db)
-	songSvc := songservice.NewSongService(songsRepo)
-	songsRoutes := songshandler.NewHandler(songSvc, logger)
+	songService := songservice.NewSongService(songsRepo)
+	songsHandler := songshandler.NewHandler(songService, logger)
 
 	r := mux.NewRouter()
 	api := r.PathPrefix("/api").Subrouter()
 
-	api.HandleFunc("/songs", songsRoutes.GetSongs).Methods("GET")
+	api.HandleFunc("/songs", songsHandler.GetSongs).Methods("GET")
 
 	done := make(chan bool)
 
