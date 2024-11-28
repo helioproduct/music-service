@@ -14,7 +14,7 @@ type songService struct {
 	repo   repo.SongRepo
 }
 
-func NewSongService(repo repo.SongRepo) services.SongService {
+func NewSongService(apiURL string, repo repo.SongRepo) services.SongService {
 	return &songService{repo: repo}
 }
 

@@ -18,9 +18,10 @@ type HTTPConfig struct {
 }
 
 type Config struct {
-	Env      string `env:"ENV"`
-	Postgres PostgresConfig
-	HTTP     HTTPConfig
+	Env          string `env:"ENV"`
+	Postgres     PostgresConfig
+	HTTP         HTTPConfig
+	SongsInfoURL string
 }
 
 func LoadConfig() (*Config, error) {
@@ -37,6 +38,7 @@ func LoadConfig() (*Config, error) {
 		HTTP: HTTPConfig{
 			Port: os.Getenv("HTTP_PORT"),
 		},
+		SongsInfoURL: os.Getenv("SongsInfoURL"),
 	}
 
 	if config.Postgres.URI == "" {

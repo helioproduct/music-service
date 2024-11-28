@@ -54,7 +54,7 @@ func main() {
 	}
 
 	songsRepo := songsrepo.NewPostgres(db)
-	songService := songservice.NewSongService(songsRepo)
+	songService := songservice.NewSongService(cfg.SongsInfoURL, songsRepo)
 	songsHandler := songshandler.NewHandler(songService, logger)
 
 	r := mux.NewRouter()
