@@ -134,16 +134,20 @@ func (r *PostgresRepo) ListSongs(ctx context.Context, filter *domain.SongFilter)
 	}
 
 	if len(conditions) > 0 {
-		query += "WHERE " + strings.Join(conditions, " AND ") + " "
+		query += "\nWHERE " + strings.Join(conditions, " AND ") + " "
 	}
 
 	query += fmt.Sprintf("LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
 	args = append(args, filter.Limit, filter.Offset)
 
+	// fmt.Println(query)
+	// fmt.Println(args...)
+
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing query: %w", err)
 	}
+
 	defer rows.Close()
 
 	var songs []*domain.Song

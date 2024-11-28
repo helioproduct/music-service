@@ -5,13 +5,13 @@ import (
 	"music-service/pkg/logger"
 )
 
-type SongHanlder struct {
+type SongHandler struct {
 	logger      logger.Logger
 	songService services.SongService
 }
 
-func NewHandler(svc services.SongService, logger logger.Logger) *SongHanlder {
-	return &SongHanlder{
+func NewHandler(svc services.SongService, logger logger.Logger) *SongHandler {
+	return &SongHandler{
 		songService: svc,
 		logger:      logger,
 	}
