@@ -6,9 +6,6 @@ import (
 	"strconv"
 )
 
-type GetLyricsRequest struct {
-}
-
 type GetLyricsResponse struct {
 	Verses []string `json:"verses"`
 }
