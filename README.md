@@ -15,11 +15,11 @@ swagger
 ### Запуск из корня проекта
 
 ```make
-docker compose -f ./deployment/docker-compose.yml up
+docker compose -f ./deployment/docker-compose.yaml up
 ```
 После этого сервис будер доступен на `localhost:8080`
 
-Документация swagger ui после docker compose доступна на localhost:8082  
+Документация swagger ui после docker compose доступна на `localhost:8082` 
 [Документация openapi](./docs/openapi.yaml)
 
 
