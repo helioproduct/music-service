@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -23,25 +24,43 @@ type SongDetail struct {
 	Link        string `json:"link"`
 }
 
-func FetchSongDetails(url, group, song string) (*SongDetail, error) {
-	// reqURL := fmt.Sprintf("%s/info?group=%s&song=%s", songsApiURL, group, song)
-	// resp, err := http.Get(reqURL)
+func FetchSongDetails(ctx context.Context, url, group, song string) (*SongDetail, error) {
 
-	// Mocking an HTTP response
-	resp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       ioutil.NopCloser(strings.NewReader(mockedResponse)),
+	apiURL := fmt.Sprintf("%s/info?group=%s&song=%s", url, group, song)
+	resultChan := make(chan *http.Response)
+
+	go func(ctx context.Context) {
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			resultChan <- resp
+		} else {
+			resultChan <- nil
+		}
+	}(ctx)
+
+	select {
+	case <-resultChan:
+
+		// Mocking an HTTP response
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       ioutil.NopCloser(strings.NewReader(mockedResponse)),
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("failed to fetch song details: status %d", resp.StatusCode)
+		}
+		defer resp.Body.Close()
+
+		var songDetail SongDetail
+		if err := json.NewDecoder(resp.Body).Decode(&songDetail); err != nil {
+			return nil, fmt.Errorf("failed to decode song details: %w", err)
+		}
+
+		return &songDetail, nil
+
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch song details: status %d", resp.StatusCode)
-	}
-	defer resp.Body.Close()
-
-	var songDetail SongDetail
-	if err := json.NewDecoder(resp.Body).Decode(&songDetail); err != nil {
-		return nil, fmt.Errorf("failed to decode song details: %w", err)
-	}
-
-	return &songDetail, nil
 }

@@ -7,6 +7,7 @@ import (
 	"music-service/internal/repo"
 	"music-service/internal/services"
 	"music-service/pkg/timex"
+	"time"
 )
 
 type songService struct {
@@ -23,10 +24,14 @@ func (s *songService) AddSong(ctx context.Context, song *domain.Song) (*domain.S
 		return nil, domain.ErrSongIsNil
 	}
 
-	details, err := FetchSongDetails(s.apiURL, song.Group.Name, song.Name)
+	contextTimeout, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	details, err := FetchSongDetails(contextTimeout, s.apiURL, song.Group.Name, song.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch song details from external API: %w", err)
 	}
+
 	if details.ReleaseDate != "" {
 		song.ReleaseDate, err = timex.ParseDateOnly(details.ReleaseDate)
 		if err != nil {
